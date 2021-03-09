@@ -26,7 +26,7 @@ func (c *queueTreeCollector) init() {
 
 	labelNames := []string{"name", "address", "queue", "comment"}
 	c.descriptions = make(map[string]*prometheus.Desc)
-	for i, p := range c.props[1:] {
+	for i, p := range c.props {
 		c.descriptions[p] = descriptionForPropertyNameHelpText("queuetree", p, labelNames, helpText[i])
 	}
 
@@ -74,7 +74,7 @@ func (c *queueTreeCollector) collectForStat(re *proto.Sentence, ctx *collectorCo
 	name := re.Map["name"]
 	comment := re.Map["comment"]
 
-	for _, p := range c.props[2:] {
+	for _, p := range c.props {
 		c.collectMetricForProperty(p, name, comment, re, ctx)
 	}
 }
