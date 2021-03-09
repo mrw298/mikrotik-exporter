@@ -175,6 +175,13 @@ func WithIpsec() Option {
 	}
 }
 
+// WithQueueTrees enable queue tree metrics
+func WithQueueTrees() Option {
+	return func(c *collector) {
+		c.collectors = append(c.collectors, newQueueTreeCollector())
+	}
+}
+
 // Option applies options to collector
 type Option func(*collector)
 
