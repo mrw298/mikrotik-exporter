@@ -24,7 +24,7 @@ func (c *queueTreeCollector) init() {
 	c.props = []string{"bytes", "packets", "dropped", "rate", "packet-rate", "queued-packets", "queued-bytes"}
 	helpText := []string{"Total Bytes", "Total Packets", "Dropped Packets", "Average Throughput Rate", "Average Packet Rate", "Queued Packets", "Queued Bytes"}
 
-	labelNames := []string{"name", "address", "queue", "comment"}
+	labelNames := []string{"name", "address", "queue", "comment", "parent"}
 	c.descriptions = make(map[string]*prometheus.Desc)
 	for i, p := range c.props {
 		c.descriptions[p] = descriptionForPropertyNameHelpText("queuetree", p, labelNames, helpText[i])
@@ -73,13 +73,14 @@ func (c *queueTreeCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, er
 func (c *queueTreeCollector) collectForStat(re *proto.Sentence, ctx *collectorContext) {
 	name := re.Map["name"]
 	comment := re.Map["comment"]
+	parent := re.Map["parent"]
 
 	for _, p := range c.props {
-		c.collectMetricForProperty(p, name, comment, re, ctx)
+		c.collectMetricForProperty(p, name, comment, parent, re, ctx)
 	}
 }
 
-func (c *queueTreeCollector) collectMetricForProperty(property, qt, comment string, re *proto.Sentence, ctx *collectorContext) {
+func (c *queueTreeCollector) collectMetricForProperty(property, qt, comment, parent string, re *proto.Sentence, ctx *collectorContext) {
 	desc := c.descriptions[property]
 	if value := re.Map[property]; value != "" {
 		v, err := strconv.ParseFloat(value, 64)
@@ -96,9 +97,9 @@ func (c *queueTreeCollector) collectMetricForProperty(property, qt, comment stri
 
 		_, isGauge := c.gauges[property]
 		if isGauge {
-			ctx.ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, v, ctx.device.Name, ctx.device.Address, qt, comment)
+			ctx.ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, v, ctx.device.Name, ctx.device.Address, qt, comment, parent)
 		} else {
-			ctx.ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, v, ctx.device.Name, ctx.device.Address, qt, comment)
+			ctx.ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, v, ctx.device.Name, ctx.device.Address, qt, comment, parent)
 		}
 	}
 }
