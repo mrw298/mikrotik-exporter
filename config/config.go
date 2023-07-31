@@ -1,10 +1,13 @@
 package config
 
 import (
+	"bytes"
+	"github.com/spf13/viper"
 	"io"
 	"io/ioutil"
-
-	yaml "gopkg.in/yaml.v2"
+	"os"
+	"reflect"
+	"strings"
 )
 
 // Config represents the configuration for the exporter
@@ -56,8 +59,28 @@ func Load(r io.Reader) (*Config, error) {
 		return nil, err
 	}
 
+	viper.SetConfigType("yaml")
+	viper.AutomaticEnv()
+	err = viper.ReadConfig(bytes.NewBuffer(b))
+	if err != nil {
+		return nil, err
+	}
+
+	decodeHook := func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+		if f.Kind() == reflect.String {
+			stringData := data.(string)
+			if strings.HasPrefix(stringData, "${") && strings.HasSuffix(stringData, "}") {
+				envVarValue := os.Getenv(strings.TrimPrefix(strings.TrimSuffix(stringData, "}"), "${"))
+				if len(envVarValue) > 0 {
+					return envVarValue, nil
+				}
+			}
+		}
+		return data, nil
+	}
+
 	c := &Config{}
-	err = yaml.Unmarshal(b, c)
+	err = viper.Unmarshal(&c, viper.DecodeHook(decodeHook))
 	if err != nil {
 		return nil, err
 	}
