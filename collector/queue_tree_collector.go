@@ -48,13 +48,12 @@ func (c *queueTreeCollector) collect(ctx *collectorContext) error {
 }
 
 func (c *queueTreeCollector) fetch(ctx *collectorContext) ([]*proto.Sentence, error) {
-	//reply, err := ctx.client.Run("/interface/print", "?disabled=false", "?running=true", "=.proplist="+strings.Join(c.props, ","))
 	reply, err := ctx.client.Run("/queue/tree/getall", "?disabled=false", "?invalid=false")
 	if err != nil {
 		log.WithFields(log.Fields{
 			"device": ctx.device.Name,
 			"error":  err,
-		}).Error("error fetching interface metrics")
+		}).Error("error fetching queue tree metrics")
 		return nil, err
 	}
 
@@ -81,7 +80,7 @@ func (c *queueTreeCollector) collectMetricForProperty(property, qt, comment stri
 				"property":   property,
 				"value":      value,
 				"error":      err,
-			}).Error("error parsing interface metric value")
+			}).Error("error parsing queue tree metric value")
 			return
 		}
 		ctx.ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, v, ctx.device.Name, ctx.device.Address, qt, comment)
