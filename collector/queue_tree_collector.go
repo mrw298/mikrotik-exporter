@@ -8,8 +8,10 @@ import (
 )
 
 type queueTreeCollector struct {
-	props        []string
+	props []string
+
 	descriptions map[string]*prometheus.Desc
+	gauges       map[string]struct{}
 }
 
 func newQueueTreeCollector() routerOSCollector {
@@ -19,12 +21,20 @@ func newQueueTreeCollector() routerOSCollector {
 }
 
 func (c *queueTreeCollector) init() {
-	c.props = []string{"name", "parent", "bytes", "packets", "dropped", "rate", "packet-rate", "queued-packets", "queued-bytes"}
+	c.props = []string{"bytes", "packets", "dropped", "rate", "packet-rate", "queued-packets", "queued-bytes"}
+	helpText := []string{"Total Bytes", "Total Packets", "Dropped Packets", "Average Throughput Rate", "Average Packet Rate", "Queued Packets", "Queued Bytes"}
 
 	labelNames := []string{"name", "address", "queue", "comment"}
 	c.descriptions = make(map[string]*prometheus.Desc)
-	for _, p := range c.props[1:] {
-		c.descriptions[p] = descriptionForPropertyName("queuetree", p, labelNames)
+	for i, p := range c.props[1:] {
+		c.descriptions[p] = descriptionForPropertyNameHelpText("queuetree", p, labelNames, helpText[i])
+	}
+
+	// Some data elements are gauges
+	gaugeValues := []string{"rate", "packet-rate", "queued-bytes", "queued-packets"}
+	c.gauges = make(map[string]struct{}, len(gaugeValues))
+	for _, g := range gaugeValues {
+		c.gauges[g] = struct{}{}
 	}
 }
 
@@ -83,6 +93,12 @@ func (c *queueTreeCollector) collectMetricForProperty(property, qt, comment stri
 			}).Error("error parsing queue tree metric value")
 			return
 		}
-		ctx.ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, v, ctx.device.Name, ctx.device.Address, qt, comment)
+
+		_, isGauge := c.gauges[property]
+		if isGauge {
+			ctx.ch <- prometheus.MustNewConstMetric(desc, prometheus.GaugeValue, v, ctx.device.Name, ctx.device.Address, qt, comment)
+		} else {
+			ctx.ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, v, ctx.device.Name, ctx.device.Address, qt, comment)
+		}
 	}
 }
