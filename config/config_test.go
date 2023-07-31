@@ -28,10 +28,11 @@ func TestShouldParse(t *testing.T) {
 	assertFeature("WlanSTA", c.Features.WlanSTA, t)
 	assertFeature("WlanIF", c.Features.WlanIF, t)
 	assertFeature("Ipsec", c.Features.Ipsec, t)
+	assertFeature("QueueTrees", c.Features.QueueTrees, t)
 }
 
 func loadTestFile(t *testing.T) []byte {
-	b, err := ioutil.ReadFile("test/config.test.yml")
+	b, err := ioutil.ReadFile("config.test.yml")
 	if err != nil {
 		t.Fatalf("could not load config: %v", err)
 	}

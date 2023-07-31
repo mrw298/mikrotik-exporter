@@ -29,7 +29,7 @@ type Config struct {
 		WlanIF     bool `yaml:"wlanif,omitempty"`
 		Monitor    bool `yaml:"monitor,omitempty"`
 		Ipsec      bool `yaml:"ipsec,omitempty"`
-		QueueTrees bool `yaml:"queue_trees,omitempty"`
+		QueueTrees bool `yaml:"queuetrees,omitempty"`
 	} `yaml:"features,omitempty"`
 }
 
